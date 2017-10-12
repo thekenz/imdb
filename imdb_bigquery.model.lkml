@@ -1,4 +1,4 @@
-connection: "lookerdata"
+connection: "bigquery_publicdata_standard_sql"
 
 label: "IMDB BigQuery"
 
