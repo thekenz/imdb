@@ -1,4 +1,4 @@
-- connection: lookerdata_publicdata
+- connection: bigquery_publicdata_standard_sql
 - label: 'IMDB BigQuery'
 
 - include: "*.view.lookml"       # include all the views
