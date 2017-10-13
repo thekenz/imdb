@@ -3,7 +3,7 @@
 #  $99,999 (USA) 10 November 2012
 #
 # There is a number for each weekend.
-#
+# Currently working on derived table here: https://exploreday.looker.com/sql/svyytjytskgnzf
 view: movie_weekend_revenue {
   derived_table: {
     persist_for: "100 hours"
@@ -17,27 +17,16 @@ view: movie_weekend_revenue {
       FROM (
         SELECT
           movie_id
-          , info as info  -- DIALECT: {{ _dialect._name }}
-          , {% if _dialect._name contains 'spark' %}
-               CAST(REGEXP_REPLACE(SPLIT(info, ' ')[0],'[\\$,]','') AS DECIMAL(38,8)) / 1000000.0
-            {% else %}
-              CAST(REPLACE(REPLACE(SPLIT_PART(info,' ',1),'$',''),',','') AS NUMERIC) / 1000000.0
-            {% endif %} as amount_to_date
-          ,
-            {% if _dialect._name contains 'spark' %}
-               FROM_UNIXTIME(UNIX_TIMESTAMP(REGEXP_REPLACE(info,'^[^\)]*\\) \\(',''),'dd MMMMM yyy'),'yyy-MM-dd')
-            {% else %}
-               TO_DATE(RTRIM(REGEXP_SUBSTR(info,'[^\(]*$'),1),'DD Month YYYY')
-            {% endif %}  as weekend_date
+          , info as info
+          , CAST(REPLACE(REPLACE(REGEXP_EXTRACT(info, r"([^\s]+)"), "$", ""), ",", "") AS FLOAT64) / 1000000.0
+            as amount_to_date -- this is working
+          , DATE(RTRIM(REGEXP_EXTRACT(info,'[^\\(]*$'),")"),'DD Month YYYY') as weekend_date -- this is not
         FROM `lookerdata.imdb.movie_info` as movie_info
         WHERE
           movie_info.info_type_id = 107
           AND
-            {% if _dialect._name contains 'spark' %}
-              info RLIKE '^\\$[\\d,]* \\(USA\\).*\\(.*\\)$'
-            {% else %}
               info ILIKE '$%(USA)%(%)' and info ~ '\\d\\d [A-Z][a-z]* \\d\\d\\d\\d\\\)$'
-            {% endif %}
+
 
       ) AS BOO
        ;;
